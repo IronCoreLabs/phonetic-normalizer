@@ -5,87 +5,90 @@ pub fn normalize_word(source: &str) -> Cow<str> {
 
     // **Start of word substitutions**
 
-    // s/^c/k/;
-    replace_start_if(&mut dest, "c", "k");
+    let mut char_iter = dest.chars();
+    let first_char: Option<char> = char_iter.next();
+    let second_char: Option<char> = char_iter.next();
 
-    // s/^qu/k/;
-    replace_start_if(&mut dest, "qu", "k");
-
-    // s/^ph/f/;
-    replace_start_if(&mut dest, "ph", "f");
-
-    // s/^j([aeiouy])/g$1/;
-    replace_start_if(&mut dest, "j", "g"); // TODO: check for vowel after leading j?
-
-    // s/^x/z/;
-    replace_start_if(&mut dest, "x", "z");
-
-    // s/^wh/w/;
-    replace_start_if(&mut dest, "wh", "w");
-
-    // s/^kn/n/;
-    replace_start_if(&mut dest, "kn", "n");
-
-    // s/^gn/n/;
-    replace_start_if(&mut dest, "gn", "n");
-
-    // **End of word substitutions**
-
-    // s/ee$/y/;
-    replace_end_if(&mut dest, "ee", "y");
-
-    // vowel,c => vowel,k s/([aeiouy])c$/$1k/;
-    replace_end_if(&mut dest, "ac", "ak");
-    replace_end_if(&mut dest, "ec", "ek");
-    replace_end_if(&mut dest, "ic", "ik");
-    replace_end_if(&mut dest, "oc", "ok");
-    replace_end_if(&mut dest, "uc", "uk");
-    replace_end_if(&mut dest, "yc", "yk");
-
-    // s/[ae]ly$/ly/;
-    replace_end_if(&mut dest, "aly", "ly");
-    replace_end_if(&mut dest, "ely", "ly");
-
-    replace_end_if(&mut dest, "mme", "m");
-
-    // s/ey$/y/;
-    replace_end_if(&mut dest, "ey", "y");
-
-    // s/cy$/sy/;
-    replace_end_if(&mut dest, "cy", "sy");
-
-    // TODO: (consonent except y),d => consonent,ed s/([^aeiouy])d$/$1ed/;
-    if dest.len() > 1
-        && dest.ends_with("d")
-        && !is_vowel(&dest[(dest.len() - 2)..(dest.len() - 1)], true)
-    {
-        dest.replace_range(dest.len() - 1.., "ed");
+    match (first_char, second_char) {
+        // s/^c/k/;
+        (Some('c'), _) => dest.replace_range(0..1, "k"),
+        // s/^qu/k/;
+        (Some('q'), Some('u')) => dest.replace_range(0..2, "k"),
+        // s/^ph/f/;
+        (Some('p'), Some('h')) => dest.replace_range(0..2, "f"),
+        // s/^wh/w/;
+        (Some('w'), Some('h')) => dest.replace_range(0..2, "w"),
+        // s/^kn/n/;
+        (Some('k'), Some('n')) => dest.replace_range(0..2, "n"),
+        // s/^x/z/;
+        (Some('x'), _) => dest.replace_range(0..2, "z"),
+        // s/^gn/n/;
+        (Some('g'), Some('n')) => dest.replace_range(0..2, "n"),
+        // s/^j/g/;
+        (Some('j'), _) => dest.replace_range(0..1, "g"),
+        (_, _) => {}
     }
 
-    // s/ible$/able/;
-    replace_end_if(&mut dest, "ible", "able");
+    // **End of word substitutions**
+    let mut char_iter = dest.chars();
+    let last_char: Option<char> = char_iter.next_back();
+    let last_char2: Option<char> = char_iter.next_back();
+    let last_char3: Option<char> = char_iter.next_back();
+    let last_char4: Option<char> = char_iter.next_back();
 
-    // s/ce$/se/;
-    replace_end_if(&mut dest, "ce", "se");
-
-    // s/yn$/ine/;
-    replace_end_if(&mut dest, "yn", "ine");
-
-    // s/ious$/ous/;
-    replace_end_if(&mut dest, "ious", "ous");
-
-    // s/ent$/ant/;
-    replace_end_if(&mut dest, "ent", "ant");
-
-    // s/ed$/t/;
-    replace_end_if(&mut dest, "ed", "t");
-
+    match (last_char4, last_char3, last_char2, last_char) {
+        // s/ee$/y/;
+        (_, _, Some('e'), Some('e')) => dest.replace_range((dest.len() - 2).., "y"),
+        // vowel,c => vowel,k s/([aeiouy])c$/$1k/;
+        (_, _, Some(v), Some('c')) => {
+            if is_vowel(&v, true) {
+                dest.replace_range((dest.len() - 1).., "k");
+            }
+        }
+        // s/[ae]ly$/ly/;
+        (_, Some('a'), Some('l'), Some('y')) | (_, Some('e'), Some('l'), Some('y')) => {
+            dest.replace_range((dest.len() - 3).., "ly")
+        }
+        // s/mme$/m/;
+        (_, Some('m'), Some('m'), Some('e')) => dest.replace_range((dest.len() - 2).., ""),
+        // s/ey$/y/;
+        (_, _, Some('e'), Some('y')) => dest.replace_range((dest.len() - 2).., "y"),
+        // s/cy$/sy/;
+        (_, _, Some('c'), Some('y')) => dest.replace_range((dest.len() - 2).., "sy"),
+        // (consonent except y),d => consonent,ed
+        (_, _, Some(v), Some('d')) => {
+            // s/ed$/t/;
+            if v == 'e' {
+                dest.replace_range((dest.len() - 2).., "t");
+            // s/([^aeiouy])d$/$1t/;
+            } else if !is_vowel(&v, true) {
+                dest.replace_range((dest.len() - 1).., "t");
+            }
+        }
+        // s/ce$/se/;
+        (_, _, Some('c'), Some('e')) => dest.replace_range((dest.len() - 2).., "se"),
+        // s/yn$/ine/;
+        (_, _, Some('y'), Some('n')) => dest.replace_range((dest.len() - 2).., "ine"),
+        // s/ent$/ant/;
+        (_, Some('e'), Some('n'), Some('t')) => dest.replace_range((dest.len() - 3).., "ant"),
+        // s/ible$/able/;
+        (Some('i'), Some('b'), Some('l'), Some('e')) => {
+            dest.replace_range((dest.len() - 4).., "able")
+        }
+        // s/ious$/ous/;
+        (Some('i'), Some('o'), Some('u'), Some('s')) => {
+            dest.replace_range((dest.len() - 4).., "ous")
+        }
+        (_, _, _, _) => {}
+    }
     // s/itly$/atly/;
     replace_end_if(&mut dest, "itly", "atly");
 
     // **Rest of word changes (everything but first char)**
 
     if dest.len() > 1 {
+        let first_char: String = dest.chars().take(1).collect();
+
         // remove double letters
         dest = dest
             .chars()
@@ -111,14 +114,13 @@ pub fn normalize_word(source: &str) -> Cow<str> {
                 acc
             });
 
-        let first_char: String = dest.chars().take(1).collect();
         let (new_dest, _, _) = dest.chars().skip(1).fold(
             (String::with_capacity(dest.len()), ' ', ' '),
             |(mut acc, c1, c2), c3| {
                 match (c1, c2, c3) {
                     // s/([^aeiou])al/$1l/g;
                     (consonant, 'a', 'l') => {
-                        if consonant == ' ' || is_vowel(&consonant.to_string(), false) {
+                        if consonant == ' ' || is_vowel(&consonant, false) {
                             acc.push('l');
                         } else {
                             replace_last(&mut acc, 2, format!("{}l", consonant).as_str());
@@ -276,10 +278,10 @@ fn replace_if<F: Fn(&str) -> bool>(
     }
 }
 
-fn is_vowel(c: &str, match_y: bool) -> bool {
+fn is_vowel(c: &char, match_y: bool) -> bool {
     match c {
-        "a" | "e" | "i" | "o" | "u" => true,
-        "y" => match_y,
+        'a' | 'e' | 'i' | 'o' | 'u' => true,
+        'y' => match_y,
         _ => false,
     }
 }
