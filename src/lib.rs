@@ -324,6 +324,7 @@ mod tests {
         assert_eq!(normalize_word("knit"), normalize_word("nit"));
         assert_eq!(normalize_word("gnaw"), normalize_word("naw"));
         assert_eq!(normalize_word("natural"), normalize_word("nateral"));
+        assert_eq!(normalize_word("wherever"), normalize_word("whereever"));
     }
 
     #[test]
