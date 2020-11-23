@@ -21,7 +21,7 @@ pub fn normalize_word(source: &str) -> Cow<str> {
         // s/^kn/n/;
         (Some('k'), Some('n')) => dest.replace_range(0..2, "n"),
         // s/^x/z/;
-        (Some('x'), _) => dest.replace_range(0..2, "z"),
+        (Some('x'), _) => dest.replace_range(0..1, "z"),
         // s/^gn/n/;
         (Some('g'), Some('n')) => dest.replace_range(0..2, "n"),
         // s/^j/g/;
@@ -233,16 +233,6 @@ pub fn normalize_word(source: &str) -> Cow<str> {
     } else {
         Cow::Owned(dest)
     }
-}
-
-fn replace_start_if(haystack: &mut String, search_for: &str, replacement: &str) {
-    replace_if(
-        haystack,
-        |h| h.starts_with(search_for),
-        0,
-        search_for.len(),
-        replacement,
-    );
 }
 
 fn replace_last(s: &mut String, n: usize, replacement: &str) {
