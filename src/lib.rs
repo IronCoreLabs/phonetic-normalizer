@@ -10,8 +10,21 @@ pub fn normalize_word(source: &str) -> Cow<str> {
     let second_char: Option<char> = char_iter.next();
 
     match (first_char, second_char) {
-        // s/^c/k/;
-        (Some('c'), _) => dest.replace_range(0..1, "k"),
+        // s/^c([^eh])/k$1/;
+        (Some('c'), Some(v)) =>
+        // turn a leading c into a k unless the second letter is e or h
+        {
+            if v == 'e' || v == 'i' {
+                // ce at start of word is typically pronounced "se" like cent / sent
+                // and ci at start of word pronounced "si" like cider, civil, citrus
+                dest.replace_range(0..1, "s");
+            } else if v == 'h' {
+                // we have a leading ch -- leave it as-is
+            } else {
+                // otherwise assume a hard k sound
+                dest.replace_range(0..1, "k");
+            }
+        }
         // s/^qu/k/;
         (Some('q'), Some('u')) => dest.replace_range(0..2, "k"),
         // s/^ph/f/;
@@ -30,6 +43,7 @@ pub fn normalize_word(source: &str) -> Cow<str> {
     }
 
     // **End of word substitutions**
+
     let mut char_iter = dest.chars();
     let last_char: Option<char> = char_iter.next_back();
     let last_char2: Option<char> = char_iter.next_back();
@@ -51,15 +65,22 @@ pub fn normalize_word(source: &str) -> Cow<str> {
         }
         // s/mme$/m/;
         (_, Some('m'), Some('m'), Some('e')) => dest.replace_range((dest.len() - 2).., ""),
-        // s/ey$/y/;
-        (_, _, Some('e'), Some('y')) => dest.replace_range((dest.len() - 2).., "y"),
+        (_, Some(v), Some('e'), Some('y')) => {
+            if v == 'r' {
+                // s/rey$/ray/;
+                dest.replace_range((dest.len() - 2).., "ay");
+            } else {
+                // s/ey$/y/;
+                dest.replace_range((dest.len() - 2).., "y");
+            }
+        }
         // s/cy$/sy/;
         (_, _, Some('c'), Some('y')) => dest.replace_range((dest.len() - 2).., "sy"),
         // (consonent except y),d => consonent,ed
         (_, _, Some(v), Some('d')) => {
-            // s/ed$/t/;
+            // s/ed$/d/;
             if v == 'e' {
-                dest.replace_range((dest.len() - 2).., "t");
+                dest.replace_range((dest.len() - 2).., "d");
             // s/([^aeiouy])d$/$1t/;
             } else if !is_vowel(&v, true) {
                 dest.replace_range((dest.len() - 1).., "t");
@@ -79,8 +100,12 @@ pub fn normalize_word(source: &str) -> Cow<str> {
         (Some('i'), Some('o'), Some('u'), Some('s')) => {
             dest.replace_range((dest.len() - 4).., "ous")
         }
+        (Some('i'), Some('t'), Some('l'), Some('y')) => {
+            dest.replace_range((dest.len() - 4).., "atly")
+        }
         (_, _, _, _) => {}
     }
+    // Must happen after other changes
     // s/itly$/atly/;
     replace_end_if(&mut dest, "itly", "atly");
 
@@ -89,25 +114,33 @@ pub fn normalize_word(source: &str) -> Cow<str> {
     if dest.len() > 1 {
         let first_char: String = dest.chars().take(1).collect();
 
-        // remove double letters
+        // Remove double letters. Don't skip first letter.
         dest = dest
             .chars()
             .fold(String::with_capacity(dest.len()), |mut acc, c| {
-                if !acc.ends_with(c) {
+                // preserve ee and oo
+                if !acc.ends_with(c) || c == 'e' || c == 'o' {
                     acc.push(c);
                 }
+
+                // These next few just need to happen before the full pass below.
+                // We do a length check because we don't want to catch the first character
+                // in these tests, which should only apply to middle and end of word matches.
+
                 // s/ight/ite/g;
-                if acc.ends_with("ight") {
+                if acc.len() > 4 && acc.ends_with("ight") {
                     // This must be done in an early pass
                     replace_last(&mut acc, 4, "ite");
                 }
                 // s/our/or/g;
-                if acc.ends_with("our") {
+                if acc.len() > 3 && acc.ends_with("our") {
                     // This must be done in an early pass
                     replace_last(&mut acc, 3, "or");
                 }
                 // s/[uae]r/r/g;
-                if acc.ends_with("ur") || acc.ends_with("ar") || acc.ends_with("er") {
+                if acc.len() > 2
+                    && (acc.ends_with("ur") || acc.ends_with("ar") || acc.ends_with("er"))
+                {
                     // This must be done in an early pass
                     replace_last(&mut acc, 2, "r");
                 }
@@ -193,7 +226,13 @@ pub fn normalize_word(source: &str) -> Cow<str> {
                     // s/([^sth]+)h/$1/g;
                     // get rid of all h's except for start and ch/sh/th
                     (_, p, 'h') => {
-                        if p == 'c' || p == 's' || p == 't' {
+                        // keep the h if the preceding char is c or s or t
+                        if p == 'c'
+                            || p == 's'
+                            || p == 't'
+                            || (p == ' '
+                                && (first_char == "c" || first_char == "t" || first_char == "s"))
+                        {
                             acc.push('h');
                         }
                     }
@@ -207,25 +246,36 @@ pub fn normalize_word(source: &str) -> Cow<str> {
         dest = first_char.clone() + &new_dest;
 
         dest = first_char
-            + &dest
-                .chars()
-                .skip(1)
-                .fold(String::with_capacity(dest.len()), |mut acc, c| {
+            + &dest.char_indices().skip(1).fold(
+                String::with_capacity(dest.len()),
+                |mut acc, (byte_idx, c)| {
                     match c {
                         // s/q/k/g;
                         'q' => acc.push('k'),
                         // s/x/k/g;
                         'x' => acc.push('k'),
-                        // s/b/p/g;
-                        'b' => acc.push('p'),
-                        // s/d/t/g;
-                        'd' => acc.push('t'),
                         // s/z/s/g;
                         'z' => acc.push('s'),
+
+                        // s/b/p/g;
+                        'b' => {
+                            // Only do this ones if we aren't on the last char
+                            if byte_idx < dest.len() {
+                                acc.push('p');
+                            }
+                        }
+                        // s/d/t/g;
+                        'd' => {
+                            if byte_idx < dest.len() {
+                                acc.push('t');
+                            }
+                        }
+
                         _ => acc.push(c),
                     }
                     acc
-                });
+                },
+            );
     }
 
     if source == dest {
@@ -284,9 +334,11 @@ mod tests {
     // British spellings: http://www.tysto.com/uk-us-spelling-list.html
 
     #[test]
-    fn start_and_end() {
+    fn specific_matches() {
         assert_eq!(normalize_word("phonee"), "fony");
         assert_eq!(normalize_word("caley"), "kaly");
+        assert_eq!(normalize_word("argument"), "argument");
+        assert_eq!(normalize_word("shack"), "shak");
     }
 
     #[test]
@@ -295,6 +347,8 @@ mod tests {
         assert_eq!(normalize_word("Philbert"), normalize_word("Filbert"));
         assert_eq!(normalize_word("Walsh"), normalize_word("Walch"));
         assert_eq!(normalize_word("John"), normalize_word("Jon"));
+        assert_eq!(normalize_word("Gary"), normalize_word("Gery"));
+        assert_eq!(normalize_word("Gary"), normalize_word("Jerry"));
     }
 
     #[test]
@@ -324,7 +378,10 @@ mod tests {
         assert_eq!(normalize_word("knit"), normalize_word("nit"));
         assert_eq!(normalize_word("gnaw"), normalize_word("naw"));
         assert_eq!(normalize_word("natural"), normalize_word("nateral"));
-        assert_eq!(normalize_word("wherever"), normalize_word("whereever"));
+        assert_eq!(normalize_word("aardvark"), normalize_word("ardvark"));
+        assert_eq!(normalize_word("cent"), normalize_word("sent"));
+        assert_eq!(normalize_word("cite"), normalize_word("site"));
+        assert_eq!(normalize_word("gray"), normalize_word("grey"));
     }
 
     #[test]
@@ -353,5 +410,7 @@ mod tests {
         assert_ne!(normalize_word("John"), normalize_word("gone"));
         assert_ne!(normalize_word("precede"), normalize_word("preset"));
         assert_ne!(normalize_word("rupert"), normalize_word("robert"));
+        assert_ne!(normalize_word("shack"), normalize_word("sack"));
+        assert_ne!(normalize_word("cent"), normalize_word("chant"));
     }
 }
