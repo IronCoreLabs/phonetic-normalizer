@@ -343,6 +343,7 @@ mod tests {
 
     #[test]
     fn name_matches() {
+        assert_eq!(normalize_word("Heriberto"), normalize_word("Hariberto"));
         assert_eq!(normalize_word("Catherine"), normalize_word("Kathryn"));
         assert_eq!(normalize_word("Philbert"), normalize_word("Filbert"));
         assert_eq!(normalize_word("Walsh"), normalize_word("Walch"));
