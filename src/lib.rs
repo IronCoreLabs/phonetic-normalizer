@@ -399,6 +399,7 @@ mod tests {
         assert_eq!(normalize_word("Collin"), normalize_word("Colin"));
         assert_eq!(normalize_word("Sebastian"), normalize_word("Sebastien"));
         assert_eq!(normalize_word("Sean"), normalize_word("Shawn"));
+        assert_eq!(normalize_word("Julian"), normalize_word("Julien"));
     }
 
     #[test]
