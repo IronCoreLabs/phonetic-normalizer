@@ -88,8 +88,12 @@ pub fn normalize_word(source: &str) -> Cow<str> {
         }
         // s/ce$/se/;
         (_, _, Some('c'), Some('e')) => dest.replace_range((dest.len() - 2).., "se"),
+        // s/rine$/ine/;
+        (Some('r'), Some('i'), Some('n'), Some('e')) => {
+            dest.replace_range((dest.len() - 4).., "rin")
+        }
         // s/yn$/ine/;
-        (_, _, Some('y'), Some('n')) => dest.replace_range((dest.len() - 2).., "ine"),
+        (_, _, Some('y'), Some('n')) => dest.replace_range((dest.len() - 2).., "in"),
         // s/ent$/ant/;
         (_, Some('e'), Some('n'), Some('t')) => dest.replace_range((dest.len() - 3).., "ant"),
         // s/ien$/ian/;
@@ -233,6 +237,8 @@ pub fn normalize_word(source: &str) -> Cow<str> {
                     (_, 'p', 'h') => replace_last(&mut acc, 1, "f"),
                     // s/an/en/g;
                     (_, 'a', 'n') => replace_last(&mut acc, 1, "en"),
+                    // s/in/en/g;
+                    (_, 'i', 'n') => replace_last(&mut acc, 1, "en"),
                     // s/ao/oa/g;
                     (_, 'a', 'o') => replace_last(&mut acc, 1, "oa"),
                     // s/y(.)/i$1/g; note: make sure this doesn't match at the end of the word
@@ -400,6 +406,9 @@ mod tests {
         assert_eq!(normalize_word("Sebastian"), normalize_word("Sebastien"));
         assert_eq!(normalize_word("Sean"), normalize_word("Shawn"));
         assert_eq!(normalize_word("Julian"), normalize_word("Julien"));
+        assert_eq!(normalize_word("Robyn"), normalize_word("Robin"));
+        assert_eq!(normalize_word("Merlin"), normalize_word("Merlyn"));
+        assert_eq!(normalize_word("Lauren"), normalize_word("Lauryn"));
     }
 
     #[test]
