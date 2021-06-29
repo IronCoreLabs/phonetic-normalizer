@@ -88,10 +88,16 @@ pub fn normalize_word(source: &str) -> Cow<str> {
         }
         // s/ce$/se/;
         (_, _, Some('c'), Some('e')) => dest.replace_range((dest.len() - 2).., "se"),
+        // s/rine$/ine/;
+        (Some('r'), Some('i'), Some('n'), Some('e')) => {
+            dest.replace_range((dest.len() - 4).., "rin")
+        }
         // s/yn$/ine/;
-        (_, _, Some('y'), Some('n')) => dest.replace_range((dest.len() - 2).., "ine"),
+        (_, _, Some('y'), Some('n')) => dest.replace_range((dest.len() - 2).., "in"),
         // s/ent$/ant/;
         (_, Some('e'), Some('n'), Some('t')) => dest.replace_range((dest.len() - 3).., "ant"),
+        // s/ien$/ian/;
+        (_, Some('i'), Some('e'), Some('n')) => dest.replace_range((dest.len() - 2).., "an"),
         // s/ible$/able/;
         (Some('i'), Some('b'), Some('l'), Some('e')) => {
             dest.replace_range((dest.len() - 4).., "able")
@@ -100,8 +106,13 @@ pub fn normalize_word(source: &str) -> Cow<str> {
         (Some('i'), Some('o'), Some('u'), Some('s')) => {
             dest.replace_range((dest.len() - 4).., "ous")
         }
+        // s/itly$/atly/;
         (Some('i'), Some('t'), Some('l'), Some('y')) => {
             dest.replace_range((dest.len() - 4).., "atly")
+        }
+        // s/sean/shawn/g;
+        (Some('s'), Some('e'), Some('a'), Some('n')) => {
+            dest.replace_range((dest.len() - 4).., "shawn")
         }
         (_, _, _, _) => {}
     }
@@ -127,15 +138,43 @@ pub fn normalize_word(source: &str) -> Cow<str> {
                 // We do a length check because we don't want to catch the first character
                 // in these tests, which should only apply to middle and end of word matches.
 
+                // s/ought/ot/g;
+                if acc.len() > 5 && acc.ends_with("ought") {
+                    replace_last(&mut acc, 5, "ot");
+                }
+                // s/plough/plow/g;
+                if acc.len() > 5 && acc.ends_with("plough") {
+                    replace_last(&mut acc, 6, "plow");
+                }
+                // s/dough/do/g;
+                if acc.len() > 4 && acc.ends_with("dough") {
+                    replace_last(&mut acc, 5, "do");
+                }
                 // s/ight/ite/g;
                 if acc.len() > 4 && acc.ends_with("ight") {
                     // This must be done in an early pass
                     replace_last(&mut acc, 4, "ite");
                 }
+                // s/eagh/eg/g;
+                if acc.len() > 4 && acc.ends_with("eagh") {
+                    // This must be done in an early pass
+                    replace_last(&mut acc, 4, "eg");
+                }
+                // s/eaga/ega/g;
+                if acc.len() > 4 && acc.ends_with("eaga") {
+                    // This must be done in an early pass
+                    replace_last(&mut acc, 4, "ega");
+                }
                 // s/our/or/g;
                 if acc.len() > 3 && acc.ends_with("our") {
                     // This must be done in an early pass
                     replace_last(&mut acc, 3, "or");
+                }
+                // We already did this for end of word, but need mid-word
+                // and needs to be run early.
+                // s/rey/ray/g;
+                if acc.len() > 3 && acc.ends_with("rey") {
+                    replace_last(&mut acc, 2, "ay");
                 }
                 // s/[uae]r/r/g;
                 if acc.len() > 2
@@ -198,6 +237,8 @@ pub fn normalize_word(source: &str) -> Cow<str> {
                     (_, 'p', 'h') => replace_last(&mut acc, 1, "f"),
                     // s/an/en/g;
                     (_, 'a', 'n') => replace_last(&mut acc, 1, "en"),
+                    // s/in/en/g;
+                    (_, 'i', 'n') => replace_last(&mut acc, 1, "en"),
                     // s/ao/oa/g;
                     (_, 'a', 'o') => replace_last(&mut acc, 1, "oa"),
                     // s/y(.)/i$1/g; note: make sure this doesn't match at the end of the word
@@ -350,11 +391,31 @@ mod tests {
         assert_eq!(normalize_word("John"), normalize_word("Jon"));
         assert_eq!(normalize_word("Gary"), normalize_word("Gery"));
         assert_eq!(normalize_word("Gary"), normalize_word("Jerry"));
+        assert_eq!(normalize_word("Catie"), normalize_word("Katie"));
+        assert_eq!(normalize_word("Megan"), normalize_word("Meaghan"));
+        assert_eq!(normalize_word("Megan"), normalize_word("Meagan"));
+        assert_eq!(normalize_word("Ashley"), normalize_word("Ashlee"));
+        assert_eq!(normalize_word("Sara"), normalize_word("Sarah"));
+        assert_eq!(normalize_word("Sienna"), normalize_word("Siena"));
+        assert_eq!(normalize_word("Savanna"), normalize_word("Savannah"));
+        assert_eq!(normalize_word("Alison"), normalize_word("Allison"));
+        assert_eq!(normalize_word("Sofia"), normalize_word("Sophia"));
+        assert_eq!(normalize_word("Grayson"), normalize_word("Greyson"));
+        assert_eq!(normalize_word("Elliot"), normalize_word("Elliott"));
+        assert_eq!(normalize_word("Collin"), normalize_word("Colin"));
+        assert_eq!(normalize_word("Sebastian"), normalize_word("Sebastien"));
+        assert_eq!(normalize_word("Sean"), normalize_word("Shawn"));
+        assert_eq!(normalize_word("Julian"), normalize_word("Julien"));
+        assert_eq!(normalize_word("Robyn"), normalize_word("Robin"));
+        assert_eq!(normalize_word("Merlin"), normalize_word("Merlyn"));
+        assert_eq!(normalize_word("Lauren"), normalize_word("Lauryn"));
     }
 
     #[test]
     fn common_misspellings() {
         assert_eq!(normalize_word("cough"), normalize_word("coff"));
+        assert_eq!(normalize_word("bought"), normalize_word("bot"));
+        assert_eq!(normalize_word("doughnut"), normalize_word("donut"));
         assert_eq!(normalize_word("piece"), normalize_word("peace"));
         assert_eq!(normalize_word("mist"), normalize_word("missed"));
         assert_eq!(normalize_word("phone"), normalize_word("fone"));
@@ -396,6 +457,7 @@ mod tests {
         assert_eq!(normalize_word("anaemia"), normalize_word("anemia"));
         assert_eq!(normalize_word("archaeology"), normalize_word("archeology"));
         assert_eq!(normalize_word("behavioural"), normalize_word("behavioral"));
+        assert_eq!(normalize_word("plough"), normalize_word("plow"));
         assert_eq!(
             normalize_word("cancellation"),
             normalize_word("cancelation")
@@ -413,5 +475,6 @@ mod tests {
         assert_ne!(normalize_word("rupert"), normalize_word("robert"));
         assert_ne!(normalize_word("shack"), normalize_word("sack"));
         assert_ne!(normalize_word("cent"), normalize_word("chant"));
+        assert_ne!(normalize_word("cough"), normalize_word("cow"));
     }
 }

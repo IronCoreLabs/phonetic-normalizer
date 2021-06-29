@@ -32,58 +32,57 @@ The algorithm seems to perform well against our test cases. It isn't perfect, bu
 
 Here are some of the words that we designed for and that will trigger a match. The third column shows the currently generated normalized word.
 
-| Word  | Alternate | Phonetically Normalized Version |
-| ----- | --------- | --------------------------------|
-| catherine | kathryn | kathrine |
-| john | jon | jon |
-| cough | coff | kof |
-| piece | peace | peese |
-| mist | missed | mist |
-| phone | fone | fone |
-| phony | fony | fony |
-| accomodate | accommodate | acomotite |
-| achieve | acheive | asheeve |
-| apparent | apparant | aprent |
-| basically | basicly | basicly |
-| argument | arguement | argument |
-| definitely | definately | definatly |
-| fourty | forty | forty |
-| further | farther | frthr |
-| gist | jist | gist |
-| byte | bite | bite |
-| gray | grey | gray |
-| siege | seige | seege |
-| sense | sence | sense |
-| consonant | consonent | konsonent |
-| shaq | shack | shak |
-| gnat | nat | nat |
-| knight | night | nite |
-| night | nite | nite |
-| knit | nit | nit |
-| gnaw | naw | naw |
-| natural | nateral | natrl |
-| wherever | whereever | wrevr |
-| color | colour | kolor |
-| accessorise | accessorize | asesorise |
-| abhominable | abominable | apominaple |
-| curiousity | curiosity | kriosity |
-| aerogramme | aerogram | arogram |
-| almanack | almanac | almenak |
-| anaemia | anemia | anemia |
-| archaeology | archeology | asheology |
-| behavioural | behavioral | beaviorl |
-| cancellation | cancelation | kenselation |
+| Word         | Alternate   | Phonetically Normalized Version  |
+| -----        | ---------   | -------------------------------- |
+| catherine    | kathryn     | kathren                          |
+| john         | jon         | gon                              |
+| cough        | coff        | kof                              |
+| piece        | peace       | peese                            |
+| mist         | missed      | mist                             |
+| phone        | fone        | fone                             |
+| phony        | fony        | fony                             |
+| accomodate   | accommodate | acomotite                        |
+| achieve      | acheive     | asheeve                          |
+| apparent     | apparant    | aprent                           |
+| basically    | basicly     | basicly                          |
+| argument     | arguement   | argument                         |
+| definitely   | definately  | defenatly                        |
+| fourty       | forty       | forty                            |
+| further      | farther     | frthr                            |
+| gist         | jist        | gist                             |
+| byte         | bite        | bite                             |
+| gray         | grey        | gray                             |
+| siege        | seige       | seege                            |
+| sense        | sence       | sense                            |
+| consonant    | consonent   | konsonent                        |
+| shaq         | shack       | shak                             |
+| gnat         | nat         | nat                              |
+| knight       | night       | nite                             |
+| night        | nite        | nite                             |
+| knit         | nit         | nit                              |
+| gnaw         | naw         | naw                              |
+| natural      | nateral     | natrl                            |
+| color        | colour      | kolor                            |
+| accessorise  | accessorize | asesorise                        |
+| abhominable  | abominable  | apomenaple                       |
+| curiousity   | curiosity   | kriosity                         |
+| aerogramme   | aerogram    | arogram                          |
+| almanack     | almanac     | almenak                          |
+| anaemia      | anemia      | anemia                           |
+| archaeology  | archeology  | arsheology                       |
+| behavioural  | behavioral  | beaviorl                         |
+| cancellation | cancelation | kenselation                      |
 
 And the words in the following table produce mismatches, which is what we want:
 
-| Word1 | Word2 |
-| ----- | ----- |
-| at | ate |
-| color | cooler |
-| phony | phone |
-| John | gone |
+| Word1   | Word2  |
+| -----   | -----  |
+| at      | ate    |
+| color   | cooler |
+| phony   | phone  |
+| John    | gone   |
 | precede | preset |
-| rupert | robert |
+| rupert  | robert |
 
 ## Using the library
 
