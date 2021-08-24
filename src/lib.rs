@@ -480,6 +480,10 @@ mod tests {
         assert_eq!(s, "wood");
 
         let mut s = "word".to_string();
+        replace_end_if(&mut s, "longword", "od");
+        assert_eq!(s, "word");
+
+        let mut s = "word".to_string();
         replace_end_if(&mut s, "d", "ld");
         assert_eq!(s, "world");
 
@@ -490,6 +494,10 @@ mod tests {
         let mut s = "piétro".to_string();
         replace_end_if(&mut s, "iétro", "et");
         assert_eq!(s, "pet");
+
+        let mut s = "piétro".to_string();
+        replace_end_if(&mut s, "long-piétro", "et");
+        assert_eq!(s, "piétro");
 
         let mut s = "piétro".to_string();
         replace_end_if(&mut s, "tro", "é");
