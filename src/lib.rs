@@ -334,7 +334,7 @@ fn replace_last(s: &mut String, n: usize, replacement: &str) {
 }
 
 fn replace_end_if(haystack: &mut String, search_for: &str, replacement: &str) {
-    if haystack.strip_suffix(search_for).is_some() {
+    if haystack.ends_with(search_for) {
         let start_at = haystack.len() - search_for.len();
         haystack.replace_range(start_at..(start_at + search_for.len()), replacement);
     }
@@ -463,5 +463,40 @@ mod tests {
     fn multibyte_chars() {
         assert_eq!(normalize_word("piétro"), "piétro");
         assert_eq!(normalize_word("piéitly"), "piéatly");
+    }
+
+    #[test]
+    fn short_words() {
+        assert_eq!(normalize_word("a"), "a");
+        assert_eq!(normalize_word("be"), "be");
+        assert_eq!(normalize_word("at"), "at");
+        assert_eq!(normalize_word("do"), "do");
+    }
+
+    #[test]
+    fn replace_end_if_tests() {
+        let mut s = "word".to_string();
+        replace_end_if(&mut s, "rd", "od");
+        assert_eq!(s, "wood");
+
+        let mut s = "word".to_string();
+        replace_end_if(&mut s, "d", "ld");
+        assert_eq!(s, "world");
+
+        let mut s = "word".to_string();
+        replace_end_if(&mut s, "rd", "e");
+        assert_eq!(s, "woe");
+
+        let mut s = "piétro".to_string();
+        replace_end_if(&mut s, "iétro", "et");
+        assert_eq!(s, "pet");
+
+        let mut s = "piétro".to_string();
+        replace_end_if(&mut s, "tro", "é");
+        assert_eq!(s, "piéé");
+
+        let mut s = "é".to_string();
+        replace_end_if(&mut s, "é", "aaa");
+        assert_eq!(s, "aaa");
     }
 }
