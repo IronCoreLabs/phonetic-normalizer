@@ -334,28 +334,9 @@ fn replace_last(s: &mut String, n: usize, replacement: &str) {
 }
 
 fn replace_end_if(haystack: &mut String, search_for: &str, replacement: &str) {
-    if haystack.len() >= search_for.len() {
-        let start = haystack.len() - search_for.len();
-        replace_if(
-            haystack,
-            |h| h.ends_with(search_for),
-            start,
-            search_for.len(),
-            replacement,
-        );
-    }
-}
-
-fn replace_if<F: Fn(&str) -> bool>(
-    haystack: &mut String,
-    search_fn: F,
-    start_at: usize,
-    len: usize,
-    replacement: &str,
-) {
-    // if haystack[start_at..].starts_with(search_for) {
-    if search_fn(&haystack[start_at..]) {
-        haystack.replace_range(start_at..(start_at + len), replacement);
+    if haystack.ends_with(search_for) {
+        let start_at = haystack.len() - search_for.len();
+        haystack.replace_range(start_at..(start_at + search_for.len()), replacement);
     }
 }
 
@@ -476,5 +457,54 @@ mod tests {
         assert_ne!(normalize_word("shack"), normalize_word("sack"));
         assert_ne!(normalize_word("cent"), normalize_word("chant"));
         assert_ne!(normalize_word("cough"), normalize_word("cow"));
+    }
+
+    #[test]
+    fn multibyte_chars() {
+        assert_eq!(normalize_word("piétro"), "piétro");
+        assert_eq!(normalize_word("piéitly"), "piéatly");
+    }
+
+    #[test]
+    fn short_words() {
+        assert_eq!(normalize_word("a"), "a");
+        assert_eq!(normalize_word("be"), "be");
+        assert_eq!(normalize_word("at"), "at");
+        assert_eq!(normalize_word("do"), "do");
+    }
+
+    #[test]
+    fn replace_end_if_tests() {
+        let mut s = "word".to_string();
+        replace_end_if(&mut s, "rd", "od");
+        assert_eq!(s, "wood");
+
+        let mut s = "word".to_string();
+        replace_end_if(&mut s, "longword", "od");
+        assert_eq!(s, "word");
+
+        let mut s = "word".to_string();
+        replace_end_if(&mut s, "d", "ld");
+        assert_eq!(s, "world");
+
+        let mut s = "word".to_string();
+        replace_end_if(&mut s, "rd", "e");
+        assert_eq!(s, "woe");
+
+        let mut s = "piétro".to_string();
+        replace_end_if(&mut s, "iétro", "et");
+        assert_eq!(s, "pet");
+
+        let mut s = "piétro".to_string();
+        replace_end_if(&mut s, "long-piétro", "et");
+        assert_eq!(s, "piétro");
+
+        let mut s = "piétro".to_string();
+        replace_end_if(&mut s, "tro", "é");
+        assert_eq!(s, "piéé");
+
+        let mut s = "é".to_string();
+        replace_end_if(&mut s, "é", "aaa");
+        assert_eq!(s, "aaa");
     }
 }
