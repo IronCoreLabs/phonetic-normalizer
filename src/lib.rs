@@ -1,7 +1,11 @@
 use std::borrow::Cow;
 
+mod ascii_fold;
+pub use ascii_fold::latinize;
+
 pub fn normalize_word(source: &str) -> Cow<str> {
-    let mut dest = source.to_lowercase();
+    let mut dest = ascii_fold::latinize(source);
+    dest.make_ascii_lowercase();
 
     // **Start of word substitutions**
 
@@ -387,13 +391,16 @@ mod tests {
         assert_eq!(normalize_word("Sebastian"), normalize_word("Sebastien"));
         assert_eq!(normalize_word("Sean"), normalize_word("Shawn"));
         assert_eq!(normalize_word("Julian"), normalize_word("Julien"));
+        assert_eq!(normalize_word("Julian"), normalize_word("Julién"));
         assert_eq!(normalize_word("Robyn"), normalize_word("Robin"));
         assert_eq!(normalize_word("Merlin"), normalize_word("Merlyn"));
         assert_eq!(normalize_word("Lauren"), normalize_word("Lauryn"));
+        assert_eq!(normalize_word("Dali"), normalize_word("Dalí"));
     }
 
     #[test]
     fn common_misspellings() {
+        assert_eq!(normalize_word("cafe"), normalize_word("café"));
         assert_eq!(normalize_word("cough"), normalize_word("coff"));
         assert_eq!(normalize_word("bought"), normalize_word("bot"));
         assert_eq!(normalize_word("doughnut"), normalize_word("donut"));
@@ -461,8 +468,8 @@ mod tests {
 
     #[test]
     fn multibyte_chars() {
-        assert_eq!(normalize_word("piétro"), "piétro");
-        assert_eq!(normalize_word("piéitly"), "piéatly");
+        assert_eq!(normalize_word("piétro"), "peetro");
+        assert_eq!(normalize_word("piéitly"), "peeetly");
     }
 
     #[test]
