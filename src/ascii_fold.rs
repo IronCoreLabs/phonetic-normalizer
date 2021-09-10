@@ -15,10 +15,9 @@
 pub fn latinize(text: &str) -> String {
     let mut output = String::with_capacity(text.len());
     for c in text.chars() {
-        if let Some(folded) = fold_non_ascii_char(c) {
-            output.push_str(folded);
-        } else {
-            output.push(c);
+        match fold_non_ascii_char(c) {
+            Some(folded) => output.push_str(folded),
+            None => output.push(c),
         }
     }
     output

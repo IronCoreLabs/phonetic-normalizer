@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
-pub mod ascii_fold;
+mod ascii_fold;
+pub use ascii_fold::latinize;
 
 pub fn normalize_word(source: &str) -> Cow<str> {
     let mut dest = ascii_fold::latinize(source);
